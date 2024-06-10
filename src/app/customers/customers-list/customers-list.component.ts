@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from "@angular/core";
 import { ICustomer } from "../../shared/interfaces";
+import { SorterService } from "../../core/sorter.service";
 
 @Component({
     selector: 'app-customers-list',
@@ -20,10 +21,10 @@ export class CustomersListComponent implements OnInit {
     }
 
     filteredCustomers: ICustomer[] = [];
-    customersOrderTotal: number | undefined;
+    customersOrderTotal = 0;
     currencyCode: string = 'USD';
 
-    constructor() { }
+    constructor(private sorterService: SorterService) { }
 
     ngOnInit() {
     }
@@ -31,13 +32,24 @@ export class CustomersListComponent implements OnInit {
     calculateOrders() {
         this.customersOrderTotal = 0;
         this.filteredCustomers.forEach((cust: ICustomer) => {
-            if (cust.orderTotal && this.customersOrderTotal) {
-                this.customersOrderTotal += cust.orderTotal;
-            }
+            this.customersOrderTotal += cust.orderTotal;
         });
     }
 
+    filter(data: string) {
+        if (data) {
+            this.filteredCustomers = this.customers.filter((cust: ICustomer) => {
+                return cust.name.toLowerCase().indexOf(data.toLowerCase()) > -1 ||
+                       cust.city.toLowerCase().indexOf(data.toLowerCase()) > -1 ||
+                       cust.orderTotal.toString().indexOf(data) > -1;
+            });
+        } else {
+            this.filteredCustomers = this.customers;
+        }
+        this.calculateOrders();
+    }
+
     sort(prop: string) {
-        // A sorter service will handle the sorting
+        this.sorterService.sort(this.filteredCustomers, prop);
     }
 }
